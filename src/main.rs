@@ -1,6 +1,16 @@
+// use sqlx::sqlite::SqlitePool;
+use std::env;
 mod bot;
+mod db;
 
-fn main() {
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> anyhow::Result<()> {
     println!("{:?}", bot::get_version());
-    bot::start_bot();
+
+    // let url = "sqlite:todos.db";
+    let url = &env::var("DATABASE_URL")?;
+
+    db::start(url).await;
+
+    Ok(())
 }

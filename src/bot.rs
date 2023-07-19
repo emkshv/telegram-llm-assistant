@@ -23,7 +23,7 @@ async fn handle_any(e: Event, state: State<()>) -> Result<Action, anyhow::Error>
 pub async fn start_bot() {
     let telegram_token = env::var("TELEGRAM_TOKEN");
 
-    println!("{:?}", telegram_token);
+    println!("start_bot token {:?}", telegram_token);
     let client = Client::new(telegram_token.unwrap().into());
     let mut router = Router::<()>::new(client);
 
