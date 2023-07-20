@@ -15,7 +15,7 @@ pub async fn create_db_if_doesnt_exists(url: &String) {
 }
 
 async fn migration_create_chat_bots(db_conn: &Pool<Sqlite>) {
-    let result = sqlx::query(
+    sqlx::query(
         "
       CREATE TABLE IF NOT EXISTS chat_bots (
           id INTEGER PRIMARY KEY NOT NULL,
@@ -29,8 +29,6 @@ async fn migration_create_chat_bots(db_conn: &Pool<Sqlite>) {
     .execute(db_conn)
     .await
     .unwrap();
-
-    println!("Create chat_bots result: {:?}", result);
 }
 
 pub async fn run_all_migrations(db_conn: &Pool<Sqlite>) {

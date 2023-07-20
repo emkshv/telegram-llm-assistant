@@ -1,4 +1,3 @@
-CREATE TABLE kittnes (name text);
 CREATE TABLE chat_bots (
           id INTEGER PRIMARY KEY NOT NULL,
           description TEXT NOT NULL
