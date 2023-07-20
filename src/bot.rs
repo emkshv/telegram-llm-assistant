@@ -1,23 +1,73 @@
 use crate::db;
+use anyhow::{anyhow, Context, Result};
 use mobot::*;
 use sqlx::{Pool, Sqlite};
-use std::env;
+use std::sync::Arc;
+use std::{collections::HashMap, env};
+use tokio::sync::RwLock;
 
-#[derive(Clone, Default, BotState)]
-struct ChatState {
-    db_pool: Option<Pool<Sqlite>>,
+#[derive(Clone)]
+enum UserChatState {
+    WaitingBehaviorInput,
+    Default,
 }
 
-async fn handle_get_version(_e: Event, _state: State<ChatState>) -> Result<Action, anyhow::Error> {
+#[derive(Clone, Default, BotState)]
+struct RunningBotState {
+    db_pool: Option<Pool<Sqlite>>,
+    user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>>,
+}
+
+async fn handle_get_version(
+    _e: Event,
+    _state: State<RunningBotState>,
+) -> Result<Action, anyhow::Error> {
     Ok(Action::ReplyText(get_version().into()))
 }
 
-async fn handle_any(e: Event, _state: State<ChatState>) -> Result<Action, anyhow::Error> {
+async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, anyhow::Error> {
     match e.update {
-        Update::Message(message) => Ok(Action::ReplyText(format!(
-            "Got new message: {}",
-            message.text.unwrap()
-        ))),
+        Update::Message(message) => {
+            let message_content = message.text.unwrap();
+            let state = state.get().read().await;
+            let db = state
+                .db_pool
+                .as_ref()
+                .cloned()
+                .ok_or_else(|| anyhow!("Database pool not available"))?;
+
+            let chat_bot = db::get_or_create_chat_bot(&db, message.chat.id)
+                .await
+                .context("Failed to get or create chat bot")?;
+
+            let user_chat_state_read_lock = state.user_chat_state.read().await;
+            let user_chat_state_value = user_chat_state_read_lock
+                .get(&chat_bot.id)
+                .unwrap_or(&UserChatState::Default)
+                .clone();
+
+            drop(user_chat_state_read_lock);
+
+            match user_chat_state_value {
+                UserChatState::WaitingBehaviorInput => {
+                    db::set_chat_bot_behavior(&db, chat_bot.id, &message_content)
+                        .await
+                        .context("Failed to set the new chat bot behavior.")?;
+
+                    let mut user_chat_state_write_lock = state.user_chat_state.write().await;
+                    user_chat_state_write_lock.insert(chat_bot.id, UserChatState::Default);
+
+                    Ok(Action::ReplyText(format!(
+                        "Defined the new bot behavior as: '{}'",
+                        message_content
+                    )))
+                }
+                UserChatState::Default => Ok(Action::ReplyText(format!(
+                    "Got a new message: '{}'",
+                    message_content
+                ))),
+            }
+        }
         Update::EditedMessage(message) => Ok(Action::ReplyText(format!(
             "Edited message: {}",
             message.text.unwrap()
@@ -26,42 +76,59 @@ async fn handle_any(e: Event, _state: State<ChatState>) -> Result<Action, anyhow
     }
 }
 
-async fn handle_get_behavior(e: Event, state: State<ChatState>) -> Result<Action, anyhow::Error> {
-    let message = e.update.get_new()?;
+async fn handle_get_behavior(e: Event, state: State<RunningBotState>) -> Result<Action> {
+    let message = e.update.get_new().context("Failed to get new update")?;
     let state = state.get().read().await;
-    let db = state.db_pool.as_ref().cloned();
+    let db = state
+        .db_pool
+        .as_ref()
+        .cloned()
+        .ok_or_else(|| anyhow!("Database pool not available"))?;
 
-    match db {
-        Some(indeed_db) => {
-            let chat_bot = db::get_or_create_chat_bot(&indeed_db, message.chat.id).await;
+    let chat_bot = db::get_or_create_chat_bot(&db, message.chat.id)
+        .await
+        .context("Failed to get or create chat bot")?;
 
-            match chat_bot {
-                Ok(cb) => {
-                    Ok(Action::ReplyText(format!(
-                        "Current bot behavior is defined as follows: '{:?}'. Use the /set_behavior command to change it.",
-                        cb.description
-                    )))
-                }
-                Err(e) => {
-                    println!("Error: {:?}", e);
-                    Ok(Action::ReplyText(format!("Something went wrong!")))
-                }
-            }
-        }
-        None => Ok(Action::ReplyText(format!("Something went wrong!"))),
-    }
+    Ok(Action::ReplyText(format!(
+        "The current bot behavior is defined as follows: '{:?}'. Use the /set_behavior command to change it.",
+        chat_bot.behavior
+    )))
+}
+
+async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<Action> {
+    let message = e.update.get_new().context("Failed to get new update")?;
+    let state = state.get().read().await;
+    let db = state
+        .db_pool
+        .as_ref()
+        .cloned()
+        .ok_or_else(|| anyhow!("Database pool not available"))?;
+
+    let chat_bot = db::get_or_create_chat_bot(&db, message.chat.id)
+        .await
+        .context("Failed to get or create chat bot")?;
+
+    let mut user_chat_state_write_lock = state.user_chat_state.write().await;
+    user_chat_state_write_lock.insert(chat_bot.id, UserChatState::WaitingBehaviorInput);
+
+    Ok(Action::ReplyText(format!(
+        "Please enter the desired chat bot behavior in the next message. Example: 'You are a helpful assistant.'"
+    )))
 }
 
 pub async fn start_bot(db_pool: &Pool<Sqlite>) {
     let telegram_token = env::var("TELEGRAM_TOKEN");
 
     let client = Client::new(telegram_token.unwrap().into());
+    let user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>> =
+        Arc::new(RwLock::new(HashMap::new()));
 
-    let state = ChatState {
+    let state = RunningBotState {
         db_pool: Some(db_pool.clone()),
+        user_chat_state,
     };
 
-    let mut router = Router::<ChatState>::new(client).with_state(state);
+    let mut router = Router::<RunningBotState>::new(client).with_state(state);
 
     router.add_route(
         Route::Message(Matcher::Exact("/version".into())),
@@ -70,6 +137,10 @@ pub async fn start_bot(db_pool: &Pool<Sqlite>) {
     router.add_route(
         Route::Message(Matcher::Exact("/show_behavior".into())),
         handle_get_behavior,
+    );
+    router.add_route(
+        Route::Message(Matcher::Exact("/set_behavior".into())),
+        handle_set_behavior,
     );
     router.add_route(Route::Message(Matcher::Any), handle_any);
     router.start().await;

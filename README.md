@@ -1,5 +1,5 @@
-A minimalistic, zero-dependencies, ChatGPT-powered Telegram assistant written in Rust.
-It has a very simple installation process, all that required is to download the binary for your architecture and then run it. It will create an sqlite3 database file, run migrations and start the bot.
+A minimalistic, zero-dependency, ChatGPT-powered Telegram assistant written in Rust.
+It has a very simple installation process: download the binary for your architecture and run it. It will create an sqlite3 database file, run migrations and start the bot.
 
 Built with:
 

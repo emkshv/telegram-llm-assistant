@@ -19,7 +19,7 @@ async fn migration_create_chat_bots(db_conn: &Pool<Sqlite>) {
         "
       CREATE TABLE IF NOT EXISTS chat_bots (
           id INTEGER PRIMARY KEY NOT NULL,
-          description TEXT NOT NULL
+          behavior TEXT NOT NULL
       );
 
       CREATE UNIQUE INDEX IF NOT EXISTS unique_index_chat_bot_ids
