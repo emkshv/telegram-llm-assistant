@@ -1,6 +1,8 @@
-use sqlx::{migrate::MigrateDatabase, Executor, FromRow, Pool, Row, Sqlite, SqlitePool};
+use sqlx::{FromRow, Pool, Sqlite, SqlitePool};
 extern crate rand;
 use rand::Rng;
+
+pub mod migration;
 
 // let new_id: i64 = rand::thread_rng().gen_range(1..i64::MAX);
 
@@ -8,39 +10,6 @@ use rand::Rng;
 struct ChatBot {
     id: i64,
     description: String,
-}
-
-async fn create_db_if_doesnt_exists(url: &String) {
-    let db_exists = Sqlite::database_exists(url).await.unwrap_or(false);
-
-    if db_exists == false {
-        println!("DB {} not found. Create a new one.", url);
-        let res = Sqlite::create_database(url).await;
-
-        match res {
-            Ok(_) => println!("Created DB {}", url),
-            Err(error) => println!("Error creating DB, {}", error),
-        }
-    }
-}
-
-async fn run_migrations(db_conn: &Pool<Sqlite>) {
-    let result = sqlx::query(
-        "
-      CREATE TABLE IF NOT EXISTS chat_bots (
-          id INTEGER PRIMARY KEY NOT NULL,
-          description TEXT NOT NULL
-      );
-
-      CREATE UNIQUE INDEX IF NOT EXISTS unique_index_chat_bot_ids
-      ON chat_bots (id);
-      ",
-    )
-    .execute(db_conn)
-    .await
-    .unwrap();
-
-    println!("Create chat_bots result: {:?}", result);
 }
 
 async fn upsert_chat_bot(db_conn: &Pool<Sqlite>, id: i64, desc: String) -> anyhow::Result<i64> {
@@ -59,7 +28,7 @@ async fn upsert_chat_bot(db_conn: &Pool<Sqlite>, id: i64, desc: String) -> anyho
 }
 
 async fn get_or_create_chat_bot(db_conn: &Pool<Sqlite>, id: i64) -> anyhow::Result<ChatBot> {
-    let def_desc: String = "You're helpful!".into();
+    let def_desc: String = "You're a helpful assistant.".into();
 
     sqlx::query!(
         "INSERT INTO chat_bots (id, description) VALUES(?1, ?2) ON CONFLICT (id) DO NOTHING;",
@@ -80,10 +49,10 @@ async fn get_or_create_chat_bot(db_conn: &Pool<Sqlite>, id: i64) -> anyhow::Resu
 
 pub async fn start(url: &String) {
     println!("start db");
-    create_db_if_doesnt_exists(url).await;
+    migration::create_db_if_doesnt_exists(url).await;
 
     let db_conn = SqlitePool::connect(url).await.unwrap();
-    run_migrations(&db_conn).await;
+    migration::run_all_migrations(&db_conn).await;
 
     let new_id: i64 = rand::thread_rng().gen_range(1..i64::MAX);
     let desc: String = "You are a helpful assistant?".into();
