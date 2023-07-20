@@ -13,3 +13,4 @@ sqlx = { version = "0.7.1", features = ["sqlite", "runtime-tokio-native-tls"] }
 rayon = "1.7.0"
 mobot = "0.3.9"
 anyhow = "1.0.72"
+rand = "0.8.5"

@@ -1,5 +1,10 @@
 /target
 
-# env
+# Env
 .envrc
 .env
+
+# Sqlite
+*.db
+*.db-shm
+*.db-wal
