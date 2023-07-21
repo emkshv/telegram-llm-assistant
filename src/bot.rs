@@ -1,4 +1,5 @@
 use crate::db::chat_bot;
+use crate::db::chat_message;
 use crate::db::chat_thread;
 use anyhow::{anyhow, Context, Result};
 use mobot::*;
@@ -68,6 +69,16 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                         chat_thread::get_or_create_chat_thread(&db, message.chat.id)
                             .await
                             .context("Failed to get the current chat thread")?;
+
+                    let _new_chat_message = chat_message::insert_new_message(
+                        &db,
+                        &message_content,
+                        message.chat.id,
+                        current_chat_thread.id,
+                        "user",
+                    )
+                    .await
+                    .context("Failed to insert a new chat message")?;
 
                     Ok(Action::ReplyText(format!(
                         "Got a new message: '{}'. Chat thread id: {}",

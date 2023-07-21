@@ -12,3 +12,11 @@ CREATE TABLE chat_threads (
       );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_one_current_thread_per_chat ON chat_threads(chat_id) WHERE is_current;
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY NOT NULL,
+    content TEXT NOT NULL,
+    chat_id INTEGER NOT NULL,
+    chat_thread_id INTEGER NOT NULL,
+    user_role TEXT NOT NULL
+);

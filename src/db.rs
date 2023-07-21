@@ -1,6 +1,7 @@
 use sqlx::{FromRow, Pool, Sqlite, SqlitePool};
 
 pub mod chat_bot;
+pub mod chat_message;
 pub mod chat_thread;
 pub mod migration;
 
