@@ -80,6 +80,11 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                     .await
                     .context("Failed to insert a new chat message")?;
 
+                    let _chat_thread_messages =
+                        chat_message::get_chat_thread_messages(&db, current_chat_thread.id)
+                            .await
+                            .context("Failed to get the thread")?;
+
                     Ok(Action::ReplyText(format!(
                         "Got a new message: '{}'. Chat thread id: {}",
                         message_content, current_chat_thread.id

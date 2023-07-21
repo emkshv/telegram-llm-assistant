@@ -9,6 +9,7 @@ pub struct ChatMessage {
     pub chat_id: i64,
     pub chat_thread_id: i64,
     pub user_role: String,
+    pub inserted_at: chrono::DateTime<chrono::Utc>,
 }
 
 pub async fn insert_new_message(
@@ -32,4 +33,18 @@ pub async fn insert_new_message(
     .await?;
 
     Ok(chat_message)
+}
+
+pub async fn get_chat_thread_messages(
+    db_conn: &Pool<Sqlite>,
+    chat_thread_id: i64,
+) -> anyhow::Result<Vec<ChatMessage>> {
+    let chat_messages: Vec<ChatMessage> = sqlx::query_as(
+        "SELECT * FROM chat_messages WHERE chat_thread_id = ? ORDER BY inserted_at DESC",
+    )
+    .bind(chat_thread_id)
+    .fetch_all(db_conn)
+    .await?;
+
+    Ok(chat_messages)
 }
