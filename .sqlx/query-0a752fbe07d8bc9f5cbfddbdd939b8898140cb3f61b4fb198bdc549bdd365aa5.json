@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE chat_threads SET is_current = false WHERE chat_id = ?1 AND is_current = true RETURNING id as \"id?\"",
+  "describe": {
+    "columns": [
+      {
+        "name": "id?",
+        "ordinal": 0,
+        "type_info": "Int64"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "0a752fbe07d8bc9f5cbfddbdd939b8898140cb3f61b4fb198bdc549bdd365aa5"
+}

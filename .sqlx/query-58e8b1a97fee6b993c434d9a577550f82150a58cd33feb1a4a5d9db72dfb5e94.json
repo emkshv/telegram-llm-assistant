@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO chat_bots (id, behavior) VALUES(?1, ?2) ON CONFLICT (id) DO NOTHING;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "58e8b1a97fee6b993c434d9a577550f82150a58cd33feb1a4a5d9db72dfb5e94"
+}

@@ -14,7 +14,7 @@ pub async fn create_db_if_doesnt_exists(url: &String) {
     }
 }
 
-async fn migration_create_chat_bots(db_conn: &Pool<Sqlite>) {
+pub async fn run_all_migrations(db_conn: &Pool<Sqlite>) {
     sqlx::query(
         "
       CREATE TABLE IF NOT EXISTS chat_bots (
@@ -22,15 +22,16 @@ async fn migration_create_chat_bots(db_conn: &Pool<Sqlite>) {
           behavior TEXT NOT NULL
       );
 
-      CREATE UNIQUE INDEX IF NOT EXISTS unique_index_chat_bot_ids
-      ON chat_bots (id);
+      CREATE TABLE IF NOT EXISTS chat_threads (
+          id INTEGER PRIMARY KEY NOT NULL,
+          is_current BOOLEAN NOT NULL DEFAULT TRUE,
+          chat_id INTEGER NOT NULL
+      );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_one_current_thread_per_chat ON chat_threads(chat_id, is_current = true);
       ",
     )
     .execute(db_conn)
     .await
     .unwrap();
-}
-
-pub async fn run_all_migrations(db_conn: &Pool<Sqlite>) {
-    migration_create_chat_bots(db_conn).await;
 }

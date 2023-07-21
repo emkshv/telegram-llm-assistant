@@ -1,4 +1,5 @@
-use crate::db;
+use crate::db::chat_bot;
+use crate::db::chat_thread;
 use anyhow::{anyhow, Context, Result};
 use mobot::*;
 use sqlx::{Pool, Sqlite};
@@ -36,7 +37,7 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                 .cloned()
                 .ok_or_else(|| anyhow!("Database pool not available"))?;
 
-            let chat_bot = db::get_or_create_chat_bot(&db, message.chat.id)
+            let chat_bot = chat_bot::get_or_create_chat_bot(&db, message.chat.id)
                 .await
                 .context("Failed to get or create chat bot")?;
 
@@ -50,7 +51,7 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
 
             match user_chat_state_value {
                 UserChatState::WaitingBehaviorInput => {
-                    db::set_chat_bot_behavior(&db, chat_bot.id, &message_content)
+                    chat_bot::set_chat_bot_behavior(&db, chat_bot.id, &message_content)
                         .await
                         .context("Failed to set the new chat bot behavior.")?;
 
@@ -62,10 +63,17 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                         message_content
                     )))
                 }
-                UserChatState::Default => Ok(Action::ReplyText(format!(
-                    "Got a new message: '{}'",
-                    message_content
-                ))),
+                UserChatState::Default => {
+                    let current_chat_thread =
+                        chat_thread::get_or_create_chat_thread(&db, message.chat.id)
+                            .await
+                            .context("Failed to get the current chat thread")?;
+
+                    Ok(Action::ReplyText(format!(
+                        "Got a new message: '{}'. Chat thread id: {}",
+                        message_content, current_chat_thread.id
+                    )))
+                }
             }
         }
         Update::EditedMessage(message) => Ok(Action::ReplyText(format!(
@@ -73,6 +81,36 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
             message.text.unwrap()
         ))),
         _ => Ok(Action::ReplyText("Anyhow!".into())),
+    }
+}
+
+async fn handle_start_new_thread(e: Event, state: State<RunningBotState>) -> Result<Action> {
+    let message = e.update.get_new().context("Failed to get new update")?;
+    let chat_id = message.chat.id;
+    let state = state.get().read().await;
+    let db = state
+        .db_pool
+        .as_ref()
+        .cloned()
+        .ok_or_else(|| anyhow!("Database pool not available"))?;
+
+    let chat_bot = chat_bot::get_or_create_chat_bot(&db, chat_id)
+        .await
+        .context("Failed to get or create chat bot")?;
+
+    let chat_thread = chat_thread::close_chat_thread(&db, chat_id)
+        .await
+        .context("Failed to get or create chat thread")?;
+
+    match chat_thread {
+        Some(chat_thread_id) => Ok(Action::ReplyText(format!(
+            "The thread number {:?} for bot {:?} has been closed. Start a new one!",
+            chat_thread_id, chat_bot.id
+        ))),
+        None => Ok(Action::ReplyText(format!(
+            "The bot with id {:?} doesn't have active threads. Start a new one!",
+            chat_bot.id
+        ))),
     }
 }
 
@@ -85,7 +123,7 @@ async fn handle_get_behavior(e: Event, state: State<RunningBotState>) -> Result<
         .cloned()
         .ok_or_else(|| anyhow!("Database pool not available"))?;
 
-    let chat_bot = db::get_or_create_chat_bot(&db, message.chat.id)
+    let chat_bot = chat_bot::get_or_create_chat_bot(&db, message.chat.id)
         .await
         .context("Failed to get or create chat bot")?;
 
@@ -104,7 +142,7 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
         .cloned()
         .ok_or_else(|| anyhow!("Database pool not available"))?;
 
-    let chat_bot = db::get_or_create_chat_bot(&db, message.chat.id)
+    let chat_bot = chat_bot::get_or_create_chat_bot(&db, message.chat.id)
         .await
         .context("Failed to get or create chat bot")?;
 
@@ -135,12 +173,16 @@ pub async fn start_bot(db_pool: &Pool<Sqlite>) {
         handle_get_version,
     );
     router.add_route(
-        Route::Message(Matcher::Exact("/show_behavior".into())),
+        Route::Message(Matcher::Exact("/get_behavior".into())),
         handle_get_behavior,
     );
     router.add_route(
         Route::Message(Matcher::Exact("/set_behavior".into())),
         handle_set_behavior,
+    );
+    router.add_route(
+        Route::Message(Matcher::Exact("/new".into())),
+        handle_start_new_thread,
     );
     router.add_route(Route::Message(Matcher::Any), handle_any);
     router.start().await;
