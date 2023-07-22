@@ -40,7 +40,7 @@ pub async fn get_chat_thread_messages(
     chat_thread_id: i64,
 ) -> anyhow::Result<Vec<ChatMessage>> {
     let chat_messages: Vec<ChatMessage> = sqlx::query_as(
-        "SELECT * FROM chat_messages WHERE chat_thread_id = ? ORDER BY inserted_at DESC",
+        "SELECT * FROM chat_messages WHERE chat_thread_id = ? ORDER BY inserted_at ASC",
     )
     .bind(chat_thread_id)
     .fetch_all(db_conn)

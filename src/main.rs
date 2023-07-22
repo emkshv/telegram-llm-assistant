@@ -1,6 +1,7 @@
 use std::env;
 mod bot;
 mod db;
+mod llm;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> anyhow::Result<()> {
