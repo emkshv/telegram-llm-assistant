@@ -1,7 +1,9 @@
 use crate::db::chat_bot;
 use crate::db::chat_message;
 use crate::db::chat_thread;
-use crate::llm::llm_service;
+use crate::llm;
+use crate::llm::llm_thread_message;
+use crate::llm::LLMProvider;
 use anyhow::{anyhow, Context, Result};
 use mobot::*;
 use sqlx::{Pool, Sqlite};
@@ -19,6 +21,7 @@ enum UserChatState {
 struct RunningBotState {
     db_pool: Option<Pool<Sqlite>>,
     user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>>,
+    llm_provider: LLMProvider,
 }
 
 async fn handle_get_version(
@@ -81,7 +84,7 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                     .await
                     .context("Failed to insert a new chat message")?;
 
-                    let llm_payload = llm_service::build_llm_thread_payload(
+                    let thread_messages = llm_thread_message::build_llm_thread_payload(
                         &db,
                         message.chat.id,
                         current_chat_thread.id,
@@ -89,11 +92,16 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                     .await
                     .context("Failed to get LLM payload.")?;
 
-                    println!(">--------------");
-                    for llm_message in llm_payload {
-                        println!("> {:?}", llm_message);
-                    }
-                    println!("--------------<");
+                    let llm_api_client: Box<dyn llm::LLMService> = match state.llm_provider {
+                        llm::LLMProvider::OpenAI => Box::new(llm::openai::OpenAI),
+                        llm::LLMProvider::Mock => Box::new(llm::mock::Mock),
+                        _ => panic!("Unknown LLM provider configuration"),
+                    };
+
+                    let answer = llm_api_client
+                        .get_answer(thread_messages)
+                        .await
+                        .context("eh")?;
 
                     Ok(Action::ReplyText(format!(
                         "Got a new message: '{}'. Chat thread id: {}",
@@ -180,7 +188,7 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
     )))
 }
 
-pub async fn start_bot(db_pool: &Pool<Sqlite>) {
+pub async fn start_bot(db_pool: &Pool<Sqlite>, llm_provider: LLMProvider) {
     let telegram_token = env::var("TELEGRAM_TOKEN");
 
     let client = Client::new(telegram_token.unwrap().into());
@@ -189,6 +197,7 @@ pub async fn start_bot(db_pool: &Pool<Sqlite>) {
 
     let state = RunningBotState {
         db_pool: Some(db_pool.clone()),
+        llm_provider,
         user_chat_state,
     };
 
