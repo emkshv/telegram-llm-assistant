@@ -1,5 +1,7 @@
+[![Rust](https://github.com/emkshv/telegram-llm-assistant/actions/workflows/rust.yml/badge.svg?branch=main)](https://github.com/emkshv/telegram-llm-assistant/actions/workflows/rust.yml)
+
 A minimalistic, zero-dependency, ChatGPT-powered Telegram assistant written in Rust.
-It has a very simple installation process: download the binary for your architecture and run it. It will create an sqlite3 database file, run migrations and start the bot.
+It has a very simple installation process: download the binary for your architecture and run it. It will create an Sqlite3 database file, run migrations and start the bot.
 
 Built with:
 
