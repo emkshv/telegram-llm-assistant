@@ -1,16 +1,12 @@
 use crate::llm::LLMService;
 use crate::llm::LLMThreadMessage;
 use async_trait::async_trait;
-use std::error::Error;
 
 pub struct Mock;
 
 #[async_trait]
 impl LLMService for Mock {
-    async fn get_answer(
-        &self,
-        thread_messages: Vec<LLMThreadMessage>,
-    ) -> Result<String, Box<dyn Error>> {
+    async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String> {
         println!("Mock request:");
 
         for msg in thread_messages {
@@ -19,7 +15,7 @@ impl LLMService for Mock {
 
         async move {
             tokio::time::sleep(tokio::time::Duration::from_micros(1)).await;
-            Ok("Ok".to_string())
+            Ok("Mock answer".to_string())
         }
         .await
     }

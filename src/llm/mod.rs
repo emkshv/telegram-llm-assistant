@@ -2,7 +2,6 @@ pub mod llm_thread_message;
 pub mod mock;
 pub mod openai;
 use async_trait::async_trait;
-use std::error::Error;
 
 use llm_thread_message::LLMThreadMessage;
 
@@ -19,9 +18,6 @@ impl Default for LLMProvider {
 }
 
 #[async_trait]
-pub trait LLMService {
-    async fn get_answer(
-        &self,
-        thread_messages: Vec<LLMThreadMessage>,
-    ) -> Result<String, Box<dyn Error + 'static>>;
+pub trait LLMService: Send {
+    async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String>;
 }

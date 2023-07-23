@@ -9,13 +9,11 @@ async fn main() -> anyhow::Result<()> {
     println!("{:?}", bot::get_version());
 
     let db_url = env::var("BOT_SQLITE_DATABASE_URL");
-    // let llm_provider = llm::LLMProvider::OpenAI;
-    let llm_provider = llm::LLMProvider::Mock;
 
     match db_url {
         Ok(db_url_val) => {
             let db_pool = db::start(&db_url_val).await;
-            bot::start_bot(&db_pool, llm_provider).await;
+            bot::start_bot(&db_pool).await;
         }
         Err(e) => println!("Please, set {:?} environment variable to continue.", e),
     }
