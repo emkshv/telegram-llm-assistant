@@ -2,18 +2,19 @@ pub mod llm_thread_message;
 pub mod mock;
 pub mod openai;
 use async_trait::async_trait;
+use clap::ValueEnum;
 
 use llm_thread_message::LLMThreadMessage;
 
-#[derive(Clone)]
-pub enum LLMProvider {
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+pub enum LLMServiceKind {
     OpenAI,
     Mock,
 }
 
-impl Default for LLMProvider {
+impl Default for LLMServiceKind {
     fn default() -> Self {
-        LLMProvider::OpenAI
+        LLMServiceKind::OpenAI
     }
 }
 

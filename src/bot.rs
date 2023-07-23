@@ -1,3 +1,4 @@
+use crate::config::Config;
 use crate::db::chat_bot;
 use crate::db::chat_message;
 use crate::db::chat_thread;
@@ -20,6 +21,7 @@ enum UserChatState {
 struct RunningBotState {
     db_pool: Option<Pool<Sqlite>>,
     user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>>,
+    config: Config,
 }
 
 async fn handle_get_version(
@@ -90,12 +92,9 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                     .await
                     .context("Failed to get LLM payload.")?;
 
-                    let llm_provider = llm::LLMProvider::OpenAI;
-                    // let llm_provider = llm::LLMProvider::Mock;
-
-                    let llm_api_client: Box<dyn llm::LLMService> = match llm_provider {
-                        llm::LLMProvider::OpenAI => Box::new(llm::openai::OpenAI),
-                        llm::LLMProvider::Mock => Box::new(llm::mock::Mock),
+                    let llm_api_client: Box<dyn llm::LLMService> = match state.config.llm_service {
+                        llm::LLMServiceKind::OpenAI => Box::new(llm::openai::OpenAI),
+                        llm::LLMServiceKind::Mock => Box::new(llm::mock::Mock),
                     };
 
                     let maybe_answer = llm_api_client.get_answer(thread_messages);
@@ -197,7 +196,7 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
     )))
 }
 
-pub async fn start_bot(db_pool: &Pool<Sqlite>) {
+pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {
     let telegram_token = env::var("TELEGRAM_TOKEN");
 
     let client = Client::new(telegram_token.unwrap().into());
@@ -207,6 +206,7 @@ pub async fn start_bot(db_pool: &Pool<Sqlite>) {
     let state = RunningBotState {
         db_pool: Some(db_pool.clone()),
         user_chat_state,
+        config,
     };
 
     let mut router = Router::<RunningBotState>::new(client).with_state(state);

@@ -7,7 +7,7 @@ pub struct Mock;
 #[async_trait]
 impl LLMService for Mock {
     async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String> {
-        println!("Mock request:");
+        println!("Mocked request:");
 
         for msg in thread_messages {
             println!("Message: {:?}", msg)
@@ -15,7 +15,7 @@ impl LLMService for Mock {
 
         async move {
             tokio::time::sleep(tokio::time::Duration::from_micros(1)).await;
-            Ok("Mock answer".to_string())
+            Ok("Mocked answer".to_string())
         }
         .await
     }
