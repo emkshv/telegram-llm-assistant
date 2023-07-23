@@ -2,6 +2,7 @@ use crate::llm::LLMService;
 use crate::llm::LLMThreadMessage;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
+use std::str::FromStr;
 
 use async_openai::{
     types::{
@@ -11,7 +12,51 @@ use async_openai::{
     Client,
 };
 
-pub struct OpenAI;
+#[derive(Copy, Clone, Debug)]
+pub enum OpenAICompletionModel {
+    Gpt4,
+    Gpt4_0613,
+    Gpt4_32k,
+    Gpt4_32k0613,
+    Gpt3_5turbo,
+    Gpt3_5turbo0613,
+    Gpt3_5turbo16k0613,
+}
+
+impl OpenAICompletionModel {
+    fn as_str(&self) -> &'static str {
+        match *self {
+            OpenAICompletionModel::Gpt4 => "gpt-4",
+            OpenAICompletionModel::Gpt4_0613 => "gpt-4-0613",
+            OpenAICompletionModel::Gpt4_32k => "gpt-4-32k",
+            OpenAICompletionModel::Gpt4_32k0613 => "gpt-4-32k-0613",
+            OpenAICompletionModel::Gpt3_5turbo => "gpt-3.5-turbo",
+            OpenAICompletionModel::Gpt3_5turbo0613 => "gpt-3.5-turbo-0613",
+            OpenAICompletionModel::Gpt3_5turbo16k0613 => "gpt-3.5-turbo-16k-0613",
+        }
+    }
+}
+
+impl FromStr for OpenAICompletionModel {
+    type Err = ();
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "gpt-4" => Ok(OpenAICompletionModel::Gpt4),
+            "gpt-4-0613" => Ok(OpenAICompletionModel::Gpt4_0613),
+            "gpt-4-32k" => Ok(OpenAICompletionModel::Gpt4_32k),
+            "gpt-4-32k-0613" => Ok(OpenAICompletionModel::Gpt4_32k0613),
+            "gpt-3.5-turbo" => Ok(OpenAICompletionModel::Gpt3_5turbo),
+            "gpt-3.5-turbo-0613" => Ok(OpenAICompletionModel::Gpt3_5turbo0613),
+            "gpt-3.5-turbo-16k-0613" => Ok(OpenAICompletionModel::Gpt3_5turbo16k0613),
+            _ => Err(()),
+        }
+    }
+}
+
+pub struct OpenAI {
+    pub completion_model: OpenAICompletionModel,
+}
 
 #[async_trait]
 impl LLMService for OpenAI {
@@ -27,19 +72,21 @@ impl LLMService for OpenAI {
             chat_req_messages.push(comp_req);
         }
 
-        let chat_completion_response = fetch_response(chat_req_messages).await;
+        let chat_completion_response =
+            fetch_response(chat_req_messages, self.completion_model).await;
         chat_completion_response.and_then(get_first_choice)
     }
 }
 
 async fn fetch_response(
     chat_req_messages: Vec<ChatCompletionRequestMessage>,
+    completion_model: OpenAICompletionModel,
 ) -> Result<CreateChatCompletionResponse, anyhow::Error> {
     let client = Client::new();
 
     let request = CreateChatCompletionRequestArgs::default()
         .max_tokens(512u16)
-        .model("gpt-3.5-turbo")
+        .model(completion_model.as_str())
         .messages(chat_req_messages)
         .build()?;
 

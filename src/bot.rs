@@ -93,8 +93,12 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                     .context("Failed to get LLM payload.")?;
 
                     let llm_api_client: Box<dyn llm::LLMService> = match state.config.llm_service {
-                        llm::LLMServiceKind::OpenAI => Box::new(llm::openai::OpenAI),
-                        llm::LLMServiceKind::Mock => Box::new(llm::mock::Mock),
+                        llm::LLMServiceKind::OpenAI => Box::new(llm::openai::OpenAI {
+                            completion_model: llm::openai::OpenAICompletionModel::Gpt3_5turbo,
+                        }),
+                        _ => Box::new(llm::mock::Mock {
+                            completion_model: llm::mock::MockCompletionModel::Bright,
+                        }),
                     };
 
                     let maybe_answer = llm_api_client.get_answer(thread_messages);

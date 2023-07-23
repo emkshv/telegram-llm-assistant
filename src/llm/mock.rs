@@ -1,8 +1,17 @@
 use crate::llm::LLMService;
+use crate::llm::LLMServiceModel;
 use crate::llm::LLMThreadMessage;
 use async_trait::async_trait;
 
-pub struct Mock;
+pub enum MockCompletionModel {
+    Bright,
+}
+
+impl LLMServiceModel for MockCompletionModel {}
+
+pub struct Mock {
+    pub completion_model: MockCompletionModel,
+}
 
 #[async_trait]
 impl LLMService for Mock {

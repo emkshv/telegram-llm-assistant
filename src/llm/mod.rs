@@ -19,6 +19,9 @@ impl Default for LLMServiceKind {
 }
 
 #[async_trait]
+pub trait LLMServiceModel: Sync + Send {}
+
+#[async_trait]
 pub trait LLMService: Send {
     async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String>;
 }
