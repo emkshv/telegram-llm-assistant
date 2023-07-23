@@ -6,12 +6,26 @@ use crate::llm::LLMServiceKind;
 #[derive(Clone, Debug)]
 pub struct Config {
     pub llm_service: LLMServiceKind,
+    pub telegram_token: String,
+}
+
+fn assert_env_var(env_var_name: &str) -> String {
+    env::var(env_var_name)
+        .unwrap_or_else(|_| {
+            eprintln!(
+                "Error: {} environment variable is not set. Please, set {} and try again.",
+                env_var_name, env_var_name
+            );
+            std::process::exit(1);
+        })
+        .into()
 }
 
 impl Default for Config {
     fn default() -> Config {
         Config {
             llm_service: LLMServiceKind::Mock,
+            telegram_token: assert_env_var("TELEGRAM_TOKEN"),
         }
     }
 }
@@ -26,19 +40,15 @@ struct Cli {
 
 pub fn create_config() -> Config {
     let cli = Cli::parse();
-    let mut cfg = Config {
-        llm_service: LLMServiceKind::Mock,
-    };
+    let mut cfg = Config::default();
 
     let openai_key = env::var("OPENAI_API_KEY");
 
     match cli.llm_service {
-        Some(LLMServiceKind::OpenAI) => match openai_key {
-            Err(e) => {
-                panic!("Error getting OPENAI_API_KEY {:?}", e);
-            }
-            Ok(_) => cfg.llm_service = LLMServiceKind::OpenAI,
-        },
+        Some(LLMServiceKind::OpenAI) => {
+            assert_env_var("OPENAI_API_KEY");
+            cfg.llm_service = LLMServiceKind::OpenAI
+        }
         Some(LLMServiceKind::Mock) => cfg.llm_service = LLMServiceKind::Mock,
         None => match openai_key {
             Err(_) => cfg.llm_service = LLMServiceKind::Mock,

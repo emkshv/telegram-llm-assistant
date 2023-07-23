@@ -10,8 +10,9 @@ async fn main() -> anyhow::Result<()> {
     let config = config::create_config();
 
     println!(
-        "Stared the telegram bot assistant. Version {:?}.",
-        bot::get_version()
+        "Stared the telegram bot assistant. Version: {:?}. LLM Service: {:?}",
+        bot::get_version(),
+        config.llm_service
     );
 
     let db_url = env::var("BOT_SQLITE_DATABASE_URL");

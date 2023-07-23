@@ -197,9 +197,7 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
 }
 
 pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {
-    let telegram_token = env::var("TELEGRAM_TOKEN");
-
-    let client = Client::new(telegram_token.unwrap().into());
+    let client = Client::new(config.telegram_token.to_string().into());
     let user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>> =
         Arc::new(RwLock::new(HashMap::new()));
 

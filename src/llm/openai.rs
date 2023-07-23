@@ -13,7 +13,26 @@ use async_openai::{
 
 pub struct OpenAI;
 
-async fn fetch_it(
+#[async_trait]
+impl LLMService for OpenAI {
+    async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String> {
+        let mut chat_req_messages: Vec<ChatCompletionRequestMessage> = vec![];
+
+        for msg in thread_messages {
+            let comp_req = ChatCompletionRequestMessageArgs::default()
+                .role(to_role(&msg.role))
+                .content(msg.message)
+                .build()?;
+
+            chat_req_messages.push(comp_req);
+        }
+
+        let chat_completion_response = fetch_response(chat_req_messages).await;
+        chat_completion_response.and_then(get_first_choice)
+    }
+}
+
+async fn fetch_response(
     chat_req_messages: Vec<ChatCompletionRequestMessage>,
 ) -> Result<CreateChatCompletionResponse, anyhow::Error> {
     let client = Client::new();
@@ -31,25 +50,6 @@ async fn fetch_it(
         .map_err(|e| anyhow::Error::new(e))?;
 
     Ok(response)
-}
-
-#[async_trait]
-impl LLMService for OpenAI {
-    async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String> {
-        let mut chat_req_messages: Vec<ChatCompletionRequestMessage> = vec![];
-
-        for msg in thread_messages {
-            let comp_req = ChatCompletionRequestMessageArgs::default()
-                .role(to_role(&msg.role))
-                .content(msg.message)
-                .build()?;
-
-            chat_req_messages.push(comp_req);
-        }
-
-        let chat_completion_response = fetch_it(chat_req_messages).await;
-        chat_completion_response.and_then(get_first_choice)
-    }
 }
 
 fn get_first_choice(resp: CreateChatCompletionResponse) -> anyhow::Result<String> {

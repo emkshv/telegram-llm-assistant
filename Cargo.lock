@@ -918,24 +918,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "helpful-assistant"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "async-openai",
- "async-trait",
- "chrono",
- "clap",
- "log",
- "mobot",
- "pretty_env_logger",
- "rand",
- "rayon",
- "sqlx",
- "tokio",
-]
-
-[[package]]
 name = "hermit-abi"
 version = "0.1.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2374,6 +2356,24 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "telegram-llm-assistant"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-openai",
+ "async-trait",
+ "chrono",
+ "clap",
+ "log",
+ "mobot",
+ "pretty_env_logger",
+ "rand",
+ "rayon",
+ "sqlx",
+ "tokio",
 ]
 
 [[package]]

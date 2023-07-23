@@ -12,7 +12,7 @@ Built with:
 Build the image
 
 ```
-docker build -t helpful-assistant .
+docker build -t telegram-llm-assistant .
 ```
 
 ### Local development

@@ -2,10 +2,10 @@
 FROM alpine:latest
 
 # Copy binary into the image
-COPY target/release/helpful-assistant /usr/local/bin/
+COPY target/release/telegram-llm-assistant /usr/local/bin/
 
 # Set execute permissions for the binary
-RUN chmod +x /usr/local/bin/helpful-assistant
+RUN chmod +x /usr/local/bin/telegram-llm-assistant
 
 # Command to run the binary when the container starts
-CMD ["helpful-assistant"]
+CMD ["telegram-llm-assistant"]
