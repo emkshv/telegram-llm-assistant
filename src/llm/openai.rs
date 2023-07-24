@@ -23,8 +23,20 @@ pub enum OpenAICompletionModel {
     Gpt3_5turbo16k0613,
 }
 
+pub fn all_completions() -> [OpenAICompletionModel; 7] {
+    [
+        OpenAICompletionModel::Gpt4,
+        OpenAICompletionModel::Gpt4_0613,
+        OpenAICompletionModel::Gpt4_32k,
+        OpenAICompletionModel::Gpt4_32k0613,
+        OpenAICompletionModel::Gpt3_5turbo,
+        OpenAICompletionModel::Gpt3_5turbo0613,
+        OpenAICompletionModel::Gpt3_5turbo16k0613,
+    ]
+}
+
 impl OpenAICompletionModel {
-    fn as_str(&self) -> &'static str {
+    pub fn as_str(&self) -> &'static str {
         match *self {
             OpenAICompletionModel::Gpt4 => "gpt-4",
             OpenAICompletionModel::Gpt4_0613 => "gpt-4-0613",

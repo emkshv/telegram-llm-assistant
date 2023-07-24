@@ -19,7 +19,9 @@ pub async fn run_all_migrations(db_conn: &Pool<Sqlite>) {
         "
         CREATE TABLE IF NOT EXISTS chat_bots (
                   id INTEGER PRIMARY KEY NOT NULL,
-                  behavior TEXT NOT NULL
+                  behavior TEXT NOT NULL,
+                  openai_model TEXT,
+                  mock_model TEXT
               );
         CREATE UNIQUE INDEX IF NOT EXISTS unique_index_chat_bot_ids
               ON chat_bots (id);

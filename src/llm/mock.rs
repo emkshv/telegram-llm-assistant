@@ -7,10 +7,22 @@ pub enum MockCompletionModel {
     Bright,
 }
 
+pub fn all_completions() -> [MockCompletionModel; 1] {
+    [MockCompletionModel::Bright]
+}
+
 impl LLMServiceModel for MockCompletionModel {}
 
 pub struct Mock {
     pub completion_model: MockCompletionModel,
+}
+
+impl MockCompletionModel {
+    pub fn as_str(&self) -> &'static str {
+        match *self {
+            MockCompletionModel::Bright => "bright",
+        }
+    }
 }
 
 #[async_trait]

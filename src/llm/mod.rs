@@ -3,6 +3,7 @@ pub mod mock;
 pub mod openai;
 use async_trait::async_trait;
 use clap::ValueEnum;
+use std::fmt;
 
 use llm_thread_message::LLMThreadMessage;
 
@@ -10,6 +11,19 @@ use llm_thread_message::LLMThreadMessage;
 pub enum LLMServiceKind {
     OpenAI,
     Mock,
+}
+
+impl fmt::Display for LLMServiceKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                LLMServiceKind::OpenAI => "OpenAI",
+                LLMServiceKind::Mock => "Mock",
+            }
+        )
+    }
 }
 
 impl Default for LLMServiceKind {

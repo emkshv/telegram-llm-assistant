@@ -4,8 +4,14 @@ use crate::db::chat_message;
 use crate::db::chat_thread;
 use crate::llm;
 use crate::llm::llm_thread_message;
+use crate::llm::mock;
+use crate::llm::mock::MockCompletionModel;
+use crate::llm::openai;
+use crate::llm::LLMService;
+use crate::llm::LLMServiceKind;
 use anyhow::{anyhow, Context, Result};
 use mobot::*;
+use mobot::{api::InlineKeyboardButton, api::SendMessageRequest, *};
 use sqlx::{Pool, Sqlite};
 use std::sync::Arc;
 use std::{collections::HashMap, env};
@@ -29,6 +35,48 @@ async fn handle_get_version(
     _state: State<RunningBotState>,
 ) -> Result<Action, anyhow::Error> {
     Ok(Action::ReplyText(get_version().into()))
+}
+
+fn buttons_for_completion_models(
+    llm_service_kind: LLMServiceKind,
+) -> Vec<Vec<InlineKeyboardButton>> {
+    let buttons: Vec<InlineKeyboardButton> = match llm_service_kind {
+        LLMServiceKind::Mock => mock::all_completions()
+            .iter()
+            .map(|m| api::InlineKeyboardButton::from(m.as_str()).with_callback_data(m.as_str()))
+            .collect(),
+        LLMServiceKind::OpenAI => openai::all_completions()
+            .iter()
+            .map(|m| api::InlineKeyboardButton::from(m.as_str()).with_callback_data(m.as_str()))
+            .collect(),
+    };
+
+    buttons.chunks(2).map(|chunk| chunk.to_vec()).collect()
+}
+
+async fn handle_set_completion_model(
+    e: Event,
+    state: State<RunningBotState>,
+) -> Result<Action, anyhow::Error> {
+    let chat_id = e.update.chat_id()?;
+    let state = state.get().read().await;
+
+    e.api
+        .send_message(
+            &SendMessageRequest::new(
+                chat_id,
+                format!(
+                    "Choose the completion model for {:?}:",
+                    state.config.llm_service.to_string()
+                ),
+            )
+            .with_reply_markup(api::ReplyMarkup::inline_keyboard_markup(
+                buttons_for_completion_models(state.config.llm_service),
+            )),
+        )
+        .await?;
+
+    Ok(Action::Done)
 }
 
 async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, anyhow::Error> {
@@ -200,6 +248,19 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
     )))
 }
 
+async fn handle_chat_callback(
+    e: Event,
+    _: State<RunningBotState>,
+) -> Result<Action, anyhow::Error> {
+    let btn = e.update.data().unwrap_or("no callback data");
+    let response = format!("Okay: {}", btn);
+
+    e.acknowledge_callback(Some(response)).await?;
+    e.remove_inline_keyboard().await?;
+
+    Ok(Action::ReplyText(format!("New model is set {:?}", btn)))
+}
+
 pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {
     let client = Client::new(config.telegram_token.to_string().into());
     let user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>> =
@@ -226,10 +287,15 @@ pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {
         handle_set_behavior,
     );
     router.add_route(
+        Route::Message(Matcher::Exact("/set_model".into())),
+        handle_set_completion_model,
+    );
+    router.add_route(
         Route::Message(Matcher::Exact("/new".into())),
         handle_start_new_thread,
     );
     router.add_route(Route::Message(Matcher::Any), handle_any);
+    router.add_route(Route::CallbackQuery(Matcher::Any), handle_chat_callback);
     router.start().await;
 }
 

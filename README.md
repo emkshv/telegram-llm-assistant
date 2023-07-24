@@ -17,6 +17,8 @@ Go to [BotFather](https://telegram.me/BotFather) and enter `/newbot`. Fill in th
 new - Clear the current context and start a new chat.
 get_behavior - Display the current system message that define's the bot's behavior.
 set_behavior - Set the new system message for defining the bot's behavior.
+get_model - Get the current completion model.
+set_model - Set the completion model for your bot.
 version - Display the current version
 ```
 
