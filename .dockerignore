@@ -1,0 +1,15 @@
+# Release
+/target
+
+# Env
+.envrc
+.env
+
+# Sqlite
+*.db
+*.db-shm
+*.db-wal
+
+# Git
+# .git
+# .github

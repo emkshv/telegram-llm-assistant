@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  main:
+    image: telegram-llm-assistant
+    command: ./target/release/telegram-llm-assistant
+    volumes:
+      - .:/docker
+    environment:
+      BOT_SQLITE_DATABASE_URL: "sqlite://telegram-llm-assistant.db"
+      TELEGRAM_TOKEN: ${TELEGRAM_TOKEN}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
