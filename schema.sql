@@ -1,7 +1,10 @@
 CREATE TABLE IF NOT EXISTS chat_bots (
           id INTEGER PRIMARY KEY NOT NULL,
-          behavior TEXT NOT NULL
+          behavior TEXT NOT NULL,
+          openai_model TEXT NOT NULL,
+          mock_model TEXT NOT NULL
       );
+
 CREATE UNIQUE INDEX IF NOT EXISTS unique_index_chat_bot_ids
       ON chat_bots (id);
 
@@ -22,4 +25,4 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     inserted_at DATETIME DEFAULT(STRFTIME('%Y-%m-%d %H:%M:%f', 'NOW'))
 );
 
-CREATE INDEX idx_chat_messages_inserted_at ON chat_messages (inserted_at);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_inserted_at ON chat_messages (inserted_at);

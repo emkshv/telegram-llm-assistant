@@ -23,6 +23,12 @@ pub enum OpenAICompletionModel {
     Gpt3_5turbo16k0613,
 }
 
+impl Default for OpenAICompletionModel {
+    fn default() -> Self {
+        OpenAICompletionModel::Gpt3_5turbo
+    }
+}
+
 pub fn all_completions() -> [OpenAICompletionModel; 7] {
     [
         OpenAICompletionModel::Gpt4,
@@ -46,6 +52,11 @@ impl OpenAICompletionModel {
             OpenAICompletionModel::Gpt3_5turbo0613 => "gpt-3.5-turbo-0613",
             OpenAICompletionModel::Gpt3_5turbo16k0613 => "gpt-3.5-turbo-16k-0613",
         }
+    }
+
+    pub fn default_string() -> String {
+        let mock_completion_model: OpenAICompletionModel = Default::default();
+        mock_completion_model.as_str().to_string()
     }
 }
 
@@ -72,6 +83,10 @@ pub struct OpenAI {
 
 #[async_trait]
 impl LLMService for OpenAI {
+    fn bot_info(&self) -> String {
+        format!("Bot uses OpenAI with {}", self.completion_model.as_str())
+    }
+
     async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String> {
         let mut chat_req_messages: Vec<ChatCompletionRequestMessage> = vec![];
 

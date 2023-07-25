@@ -7,11 +7,11 @@ use crate::llm::llm_thread_message;
 use crate::llm::mock;
 use crate::llm::mock::MockCompletionModel;
 use crate::llm::openai;
-use crate::llm::LLMService;
+use crate::llm::openai::OpenAICompletionModel;
 use crate::llm::LLMServiceKind;
 use anyhow::{anyhow, Context, Result};
 use mobot::*;
-use mobot::{api::InlineKeyboardButton, api::SendMessageRequest, *};
+use mobot::{api::InlineKeyboardButton, api::SendMessageRequest};
 use sqlx::{Pool, Sqlite};
 use std::sync::Arc;
 use std::{collections::HashMap, env};
@@ -77,6 +77,96 @@ async fn handle_set_completion_model(
         .await?;
 
     Ok(Action::Done)
+}
+
+async fn handle_get_completion_model(e: Event, state: State<RunningBotState>) -> Result<Action> {
+    let message = e.update.get_new().context("Failed to get new update")?;
+    let state = state.get().read().await;
+    let db = state
+        .db_pool
+        .as_ref()
+        .cloned()
+        .ok_or_else(|| anyhow!("Database pool not available"))?;
+
+    let chat_bot = chat_bot::get_or_create_chat_bot(&db, message.chat.id)
+        .await
+        .context("Failed to get or create chat bot")?;
+
+    let llm_service = state.config.llm_service;
+
+    let current_completion_model = match llm_service {
+        LLMServiceKind::Mock => chat_bot.mock_model,
+        LLMServiceKind::OpenAI => chat_bot.openai_model,
+    };
+
+    Ok(Action::ReplyText(format!(
+        "Bot uses {:?} with {:?} completion model",
+        llm_service.to_string(),
+        current_completion_model
+    )))
+}
+
+async fn handle_chat_callback(
+    e: Event,
+    state: State<RunningBotState>,
+) -> Result<Action, anyhow::Error> {
+    let state = state.get().read().await;
+    let btn = e.update.data().unwrap_or("no callback data");
+    let response = format!("Okay: {}", btn);
+    let chat_id = e.update.chat_id()?;
+
+    let db = state
+        .db_pool
+        .as_ref()
+        .cloned()
+        .ok_or_else(|| anyhow!("Database pool not available"))?;
+
+    let chat_bot = chat_bot::get_or_create_chat_bot(&db, chat_id)
+        .await
+        .context("Failed to get or create chat bot")?;
+
+    e.acknowledge_callback(Some(response)).await?;
+    e.remove_inline_keyboard().await?;
+
+    match state.config.llm_service {
+        LLMServiceKind::Mock => {
+            let comp_model_parsed = btn.to_string().parse::<MockCompletionModel>();
+
+            match comp_model_parsed {
+                Err(e) => Ok(Action::ReplyText(format!(
+                    "Invalid MockCompletionModel model: {:?}. Error: {:?}",
+                    btn, e
+                ))),
+                Ok(comp_model) => {
+                    chat_bot::set_chat_bot_mock_model(&db, chat_bot.id, comp_model).await?;
+
+                    Ok(Action::ReplyText(format!(
+                        "New MockCompletionModel model is set {:?}",
+                        btn
+                    )))
+                }
+            }
+        }
+
+        LLMServiceKind::OpenAI => {
+            let comp_model_parsed = btn.to_string().parse::<OpenAICompletionModel>();
+
+            match comp_model_parsed {
+                Err(e) => Ok(Action::ReplyText(format!(
+                    "Invalid OpenAICompletionModel model: {:?}. Error: {:?}",
+                    btn, e
+                ))),
+                Ok(comp_model) => {
+                    chat_bot::set_chat_bot_openai_model(&db, chat_bot.id, comp_model).await?;
+
+                    Ok(Action::ReplyText(format!(
+                        "New OpenAICompletionModel model is set {:?}",
+                        btn
+                    )))
+                }
+            }
+        }
+    }
 }
 
 async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, anyhow::Error> {
@@ -248,19 +338,6 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
     )))
 }
 
-async fn handle_chat_callback(
-    e: Event,
-    _: State<RunningBotState>,
-) -> Result<Action, anyhow::Error> {
-    let btn = e.update.data().unwrap_or("no callback data");
-    let response = format!("Okay: {}", btn);
-
-    e.acknowledge_callback(Some(response)).await?;
-    e.remove_inline_keyboard().await?;
-
-    Ok(Action::ReplyText(format!("New model is set {:?}", btn)))
-}
-
 pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {
     let client = Client::new(config.telegram_token.to_string().into());
     let user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>> =
@@ -285,6 +362,10 @@ pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {
     router.add_route(
         Route::Message(Matcher::Exact("/set_behavior".into())),
         handle_set_behavior,
+    );
+    router.add_route(
+        Route::Message(Matcher::Exact("/get_model".into())),
+        handle_get_completion_model,
     );
     router.add_route(
         Route::Message(Matcher::Exact("/set_model".into())),

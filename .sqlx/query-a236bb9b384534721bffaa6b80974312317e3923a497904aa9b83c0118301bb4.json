@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "INSERT INTO chat_bots (id, behavior, mock_model, openai_model) VALUES(?1, ?2, ?3, ?4) ON CONFLICT (id) DO NOTHING;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": []
+  },
+  "hash": "a236bb9b384534721bffaa6b80974312317e3923a497904aa9b83c0118301bb4"
+}

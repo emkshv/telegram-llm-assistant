@@ -7,6 +7,8 @@ mod llm;
 
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> anyhow::Result<()> {
+    dotenvy::dotenv()?;
+
     let config = config::create_config();
 
     println!(

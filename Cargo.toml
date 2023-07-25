@@ -18,3 +18,4 @@ chrono = "0.4.26"
 async-openai = "0.12.1"
 async-trait = "0.1.72"
 clap = { version =  "4.3.19", features = ["derive"] }
+dotenvy = "0.15.7"

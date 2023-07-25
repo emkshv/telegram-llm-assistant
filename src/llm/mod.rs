@@ -15,14 +15,12 @@ pub enum LLMServiceKind {
 
 impl fmt::Display for LLMServiceKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                LLMServiceKind::OpenAI => "OpenAI",
-                LLMServiceKind::Mock => "Mock",
-            }
-        )
+        let name = match self {
+            LLMServiceKind::OpenAI => "OpenAI",
+            LLMServiceKind::Mock => "Mock",
+        };
+
+        write!(f, "{}", name)
     }
 }
 
@@ -38,4 +36,6 @@ pub trait LLMServiceModel: Sync + Send {}
 #[async_trait]
 pub trait LLMService: Send {
     async fn get_answer(&self, thread_messages: Vec<LLMThreadMessage>) -> anyhow::Result<String>;
+
+    fn bot_info(&self) -> String;
 }

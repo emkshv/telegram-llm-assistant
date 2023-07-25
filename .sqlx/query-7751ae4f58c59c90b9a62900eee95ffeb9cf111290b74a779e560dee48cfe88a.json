@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE chat_bots SET behavior = ?1 WHERE id = ?2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "7751ae4f58c59c90b9a62900eee95ffeb9cf111290b74a779e560dee48cfe88a"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE chat_bots SET mock_model = ?1 WHERE id = ?2;",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "c7262f42a7206fc8f96c0dad86f4c4ea74141ccd989f25b5553d46124eedd1d9"
+}

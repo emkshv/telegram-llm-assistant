@@ -2367,6 +2367,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "clap",
+ "dotenvy",
  "log",
  "mobot",
  "pretty_env_logger",
