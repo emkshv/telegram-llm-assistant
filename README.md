@@ -11,20 +11,20 @@ Built with:
 
 ### Creating a Telegram bot and obtaining a token
 
-Go to [BotFather](https://telegram.me/BotFather) and enter `/newbot`. Fill in the description and save the token to the `TELEGRAM_TOKEN` environment variable. Also set the commands for the nice autocomplete: enter `/setcommands`, select your bot, and then paste:
+Go to [BotFather](https://telegram.me/BotFather) and enter `/newbot`. Fill in the description and save the token to the `TELEGRAM_TOKEN` environment variable. To define the commands for the autocomplete: enter `/setcommands`, select your bot, and then paste:
 
 ```
 new - Clear the current context and start a new chat.
-get_behavior - Display the current system message that define's the bot's behavior.
+get_behavior - Display the current system message that defines the bot's behavior.
 set_behavior - Set the new system message for defining the bot's behavior.
 get_model - Get the current completion model.
 set_model - Set the completion model for your bot.
-version - Display the current version
+version - Display the current version.
 ```
 
 ### Running using Docker
 
-Make sure you have [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/) or  [OrbStack](https://orbstack.dev/) installed.
+Make sure you have [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/). On desktop, you can use [Docker Desktop](https://docker.com/products/docker-desktop/) or [OrbStack](https://orbstack.dev/).
 
 The Docker Compose file expects your environment variables to be loaded:
 
@@ -48,3 +48,9 @@ docker-compose up
 * Edit `.envrc` to set environment variables
 * Load environment variables from `.envrc` using [direnv](https://direnv.net/), or `source .envrc`-equivalent in your shell.
 * Now you can compile with `cargo build`
+
+### Building from source
+
+* Install Rust via [RustUp](https://rustup.rs/)
+* Clone the repository
+* Run `cargo build --release`

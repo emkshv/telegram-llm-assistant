@@ -212,7 +212,7 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                             .await
                             .context("Failed to get the current chat thread")?;
 
-                    let _new_chat_message = chat_message::insert_new_message(
+                    let _new_chat_message_id = chat_message::insert_new_message(
                         &db,
                         &message_content,
                         message.chat.id,
@@ -243,7 +243,7 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
 
                     match maybe_answer.await {
                         Ok(content) => {
-                            let _new_chat_message = chat_message::insert_new_message(
+                            let _new_chat_message_id = chat_message::insert_new_message(
                                 &db,
                                 &content,
                                 message.chat.id,

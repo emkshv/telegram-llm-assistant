@@ -72,19 +72,17 @@ pub async fn set_chat_bot_mock_model(
 ) -> Result<ChatBot> {
     let completion_model_string = completion_model.as_str();
 
-    sqlx::query!(
-        r#"UPDATE chat_bots SET mock_model = ?1 WHERE id = ?2;"#,
-        completion_model_string,
-        id
+    let chat_bot = sqlx::query_as::<_, ChatBot>(
+        "UPDATE chat_bots SET mock_model = ?1 WHERE id = ?2 RETURNING *;",
     )
+    .bind(completion_model_string)
+    .bind(id)
     .fetch_one(db_conn)
     .await
     .context(format!(
         "Couldn't update the chat bot's Mock completion model with {}",
         completion_model_string
     ))?;
-
-    let chat_bot = get_by_id(db_conn, id).await?;
 
     Ok(chat_bot)
 }
@@ -94,13 +92,13 @@ pub async fn set_chat_bot_openai_model(
     id: i64,
     completion_model: OpenAICompletionModel,
 ) -> Result<ChatBot> {
-    let completion_model_string = completion_model.as_str().to_string();
+    let completion_model_string = completion_model.as_str();
 
-    sqlx::query!(
-        r#"UPDATE chat_bots SET openai_model = ?1 WHERE id = ?2;"#,
-        completion_model_string,
-        id,
+    sqlx::query_as::<_, ChatBot>(
+        "UPDATE chat_bots SET openai_model = ?1 WHERE id = ?2 RETURNING *;",
     )
+    .bind(completion_model_string)
+    .bind(id)
     .fetch_one(db_conn)
     .await
     .context(format!(
