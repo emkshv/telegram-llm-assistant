@@ -7,6 +7,7 @@ use crate::llm::LLMServiceKind;
 pub struct Config {
     pub llm_service: LLMServiceKind,
     pub telegram_token: String,
+    pub groq_api_key: Option<String>,
 }
 
 fn assert_env_var(env_var_name: &str) -> String {
@@ -26,6 +27,7 @@ impl Default for Config {
         Config {
             llm_service: LLMServiceKind::Mock,
             telegram_token: assert_env_var("TELEGRAM_TOKEN"),
+            groq_api_key: env::var("GROQ_API_KEY").ok().clone(),
         }
     }
 }
@@ -48,6 +50,10 @@ pub fn create_config() -> Config {
         Some(LLMServiceKind::OpenAI) => {
             assert_env_var("OPENAI_API_KEY");
             cfg.llm_service = LLMServiceKind::OpenAI
+        }
+        Some(LLMServiceKind::Groq) => {
+            assert_env_var("GROQ_API_KEY");
+            cfg.llm_service = LLMServiceKind::Groq
         }
         Some(LLMServiceKind::Mock) => cfg.llm_service = LLMServiceKind::Mock,
         None => match openai_key {

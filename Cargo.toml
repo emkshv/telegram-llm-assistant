@@ -7,14 +7,21 @@ edition = "2021"
 
 [dependencies]
 log = "0.4"
-pretty_env_logger = "0.4"
-tokio = { version =  "1.8", features = ["rt-multi-thread", "macros"] }
-sqlx = { version = "0.7.1", features = ["sqlite", "runtime-tokio-native-tls", "chrono"] }
-rayon = "1.7.0"
-mobot = "0.3.9"
-anyhow = "1.0.72"
+pretty_env_logger = "0.5"
+tokio = { version = "1.8", features = ["rt-multi-thread", "macros"] }
+sqlx = { version = "0.7", features = [
+  "sqlite",
+  "runtime-tokio-native-tls",
+  "chrono",
+] }
+rayon = "1.10.0"
+mobot = "0.3.10"
+anyhow = "1.0.82"
 rand = "0.8.5"
-chrono = "0.4.26"
+chrono = "0.4.38"
 async-openai = "0.12.1"
-async-trait = "0.1.72"
-clap = { version =  "4.3.19", features = ["derive"] }
+async-trait = "0.1.80"
+clap = { version = "4.3.19", features = ["derive"] }
+serde_json = "1.0.116"
+reqwest = { version = "0.12.4", features = ["json"] }
+serde = "1.0.200"

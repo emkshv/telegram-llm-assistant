@@ -1,10 +1,12 @@
+use serde::{Deserialize, Serialize};
+
 use anyhow::Context;
 use sqlx::{Pool, Sqlite};
 
 use crate::db::chat_bot;
 use crate::db::chat_message;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct LLMThreadMessage {
     pub message: String,
     pub role: String,

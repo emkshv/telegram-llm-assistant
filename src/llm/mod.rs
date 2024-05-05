@@ -1,3 +1,4 @@
+pub mod groq;
 pub mod llm_thread_message;
 pub mod mock;
 pub mod openai;
@@ -10,6 +11,7 @@ use llm_thread_message::LLMThreadMessage;
 #[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
 pub enum LLMServiceKind {
     OpenAI,
+    Groq,
     Mock,
 }
 
@@ -17,6 +19,7 @@ impl fmt::Display for LLMServiceKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = match self {
             LLMServiceKind::OpenAI => "OpenAI",
+            LLMServiceKind::Groq => "Groq",
             LLMServiceKind::Mock => "Mock",
         };
 

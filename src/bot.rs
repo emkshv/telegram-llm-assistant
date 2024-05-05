@@ -3,6 +3,8 @@ use crate::db::chat_bot;
 use crate::db::chat_message;
 use crate::db::chat_thread;
 use crate::llm;
+use crate::llm::groq;
+use crate::llm::groq::GroqCompletionModel;
 use crate::llm::llm_thread_message;
 use crate::llm::mock;
 use crate::llm::mock::MockCompletionModel;
@@ -46,6 +48,10 @@ fn buttons_for_completion_models(
             .map(|m| api::InlineKeyboardButton::from(m.as_str()).with_callback_data(m.as_str()))
             .collect(),
         LLMServiceKind::OpenAI => openai::all_completions()
+            .iter()
+            .map(|m| api::InlineKeyboardButton::from(m.as_str()).with_callback_data(m.as_str()))
+            .collect(),
+        LLMServiceKind::Groq => groq::all_completions()
             .iter()
             .map(|m| api::InlineKeyboardButton::from(m.as_str()).with_callback_data(m.as_str()))
             .collect(),
@@ -97,6 +103,7 @@ async fn handle_get_completion_model(e: Event, state: State<RunningBotState>) ->
     let current_completion_model = match llm_service {
         LLMServiceKind::Mock => chat_bot.mock_model,
         LLMServiceKind::OpenAI => chat_bot.openai_model,
+        LLMServiceKind::Groq => chat_bot.groq_model,
     };
 
     Ok(Action::ReplyText(format!(
@@ -161,6 +168,25 @@ async fn handle_chat_callback(
 
                     Ok(Action::ReplyText(format!(
                         "New OpenAICompletionModel model is set {:?}",
+                        btn
+                    )))
+                }
+            }
+        }
+
+        LLMServiceKind::Groq => {
+            let comp_model_parsed = btn.to_string().parse::<GroqCompletionModel>();
+
+            match comp_model_parsed {
+                Err(e) => Ok(Action::ReplyText(format!(
+                    "Invalid GroqCompletionModel model: {:?}. Error: {:?}",
+                    btn, e
+                ))),
+                Ok(comp_model) => {
+                    chat_bot::set_chat_bot_groq_model(&db, chat_bot.id, comp_model).await?;
+
+                    Ok(Action::ReplyText(format!(
+                        "New GroqCompletionModel model is set {:?}",
                         btn
                     )))
                 }
@@ -234,6 +260,10 @@ async fn handle_any(e: Event, state: State<RunningBotState>) -> Result<Action, a
                         llm::LLMServiceKind::OpenAI => Box::new(llm::openai::OpenAI {
                             completion_model: llm::openai::OpenAICompletionModel::Gpt3_5turbo,
                         }),
+                        llm::LLMServiceKind::Groq => Box::new(llm::groq::Groq {
+                            completion_model: llm::groq::GroqCompletionModel::Llama3_70b,
+                            api_key: state.config.groq_api_key.clone().unwrap(),
+                        }),
                         _ => Box::new(llm::mock::Mock {
                             completion_model: llm::mock::MockCompletionModel::Bright,
                         }),
@@ -278,13 +308,8 @@ async fn handle_start_new_thread(e: Event, state: State<RunningBotState>) -> Res
         .cloned()
         .ok_or_else(|| anyhow!("Database pool not available"))?;
 
-    let chat_bot = chat_bot::get_or_create_chat_bot(&db, chat_id)
-        .await
-        .context("Failed to get or create chat bot")?;
-
-    let chat_thread = chat_thread::close_chat_thread(&db, chat_id)
-        .await
-        .context("Failed to get or create chat thread")?;
+    let chat_bot = chat_bot::get_or_create_chat_bot(&db, chat_id).await?;
+    let chat_thread = chat_thread::close_chat_thread(&db, chat_id).await?;
 
     match chat_thread {
         Some(chat_thread_id) => Ok(Action::ReplyText(format!(
@@ -339,7 +364,7 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
 }
 
 pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {
-    let client = Client::new(config.telegram_token.to_string().into());
+    let client = Client::new(config.telegram_token.to_string());
     let user_chat_state: Arc<RwLock<HashMap<i64, UserChatState>>> =
         Arc::new(RwLock::new(HashMap::new()));
 

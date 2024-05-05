@@ -15,7 +15,7 @@ async fn main() -> anyhow::Result<()> {
         config.llm_service
     );
 
-    let db_url = env::var("BOT_SQLITE_DATABASE_URL");
+    let db_url = env::var("DATABASE_URL");
 
     match db_url {
         Ok(db_url_val) => {

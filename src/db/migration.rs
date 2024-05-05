@@ -21,6 +21,7 @@ pub async fn run_all_migrations(db_conn: &Pool<Sqlite>) {
                   id INTEGER PRIMARY KEY NOT NULL,
                   behavior TEXT NOT NULL,
                   openai_model TEXT NOT NULL,
+                  groq_model TEXT NOT NULL,
                   mock_model TEXT NOT NULL
               );
 
