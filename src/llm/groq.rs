@@ -7,16 +7,11 @@ use std::str::FromStr;
 use crate::llm::LLMService;
 use crate::llm::LLMThreadMessage;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub enum GroqCompletionModel {
     Llama3_8b,
+    #[default]
     Llama3_70b,
-}
-
-impl Default for GroqCompletionModel {
-    fn default() -> Self {
-        GroqCompletionModel::Llama3_70b
-    }
 }
 
 impl FromStr for GroqCompletionModel {

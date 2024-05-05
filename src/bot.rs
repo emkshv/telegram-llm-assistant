@@ -36,7 +36,7 @@ async fn handle_get_version(
     _e: Event,
     _state: State<RunningBotState>,
 ) -> Result<Action, anyhow::Error> {
-    Ok(Action::ReplyText(get_version().into()))
+    Ok(Action::ReplyText(get_version()))
 }
 
 fn buttons_for_completion_models(
@@ -358,9 +358,9 @@ async fn handle_set_behavior(e: Event, state: State<RunningBotState>) -> Result<
     let mut user_chat_state_write_lock = state.user_chat_state.write().await;
     user_chat_state_write_lock.insert(chat_bot.id, UserChatState::WaitingBehaviorInput);
 
-    Ok(Action::ReplyText(format!(
-        "Please enter the desired chat bot behavior in the next message. Example: 'You are a helpful assistant.'"
-    )))
+    Ok(Action::ReplyText(
+        "Please enter the desired chat bot behavior in the next message. Example: 'You are a helpful assistant.'".to_string()
+    ))
 }
 
 pub async fn start_bot(db_pool: &Pool<Sqlite>, config: Config) {

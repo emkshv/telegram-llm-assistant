@@ -31,15 +31,14 @@ pub async fn insert_new_message(
 ) -> anyhow::Result<i64> {
     let new_id: i64 = rand::thread_rng().gen_range(1..i64::MAX);
 
-    let _chat_message = sqlx::query_as!(
-        NewChatMessage,
-        r#"INSERT INTO chat_messages (id, content, chat_id, chat_thread_id, user_role) VALUES(?1, ?2, ?3, ?4, ?5)"#,
-        new_id,
-        content,
-        chat_id,
-        chat_thread_id,
-        user_role
+    let _chat_message = sqlx::query(
+        "INSERT INTO chat_messages (id, content, chat_id, chat_thread_id, user_role) VALUES(?1, ?2, ?3, ?4, ?5)"
     )
+    .bind(new_id)
+    .bind(content)
+    .bind(chat_id)
+    .bind(chat_thread_id)
+    .bind(user_role)
     .execute(db_conn)
     .await
     .context("Failed to create a chat message")?;

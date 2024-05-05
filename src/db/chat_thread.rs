@@ -12,15 +12,15 @@ pub struct ChatThread {
 pub async fn close_chat_thread(
     db_conn: &Pool<Sqlite>,
     chat_id: i64,
-) -> anyhow::Result<Option<i64>> {
-    let record = sqlx::query!(
-        r#"UPDATE chat_threads SET is_current = false WHERE chat_id = ?1 AND is_current = true RETURNING id as "id?""#,
-        chat_id
+) -> anyhow::Result<Option<ChatThread>> {
+    let row: Option<ChatThread> = sqlx::query_as(
+        "UPDATE chat_threads SET is_current = false WHERE chat_id = ?1 AND is_current = true RETURNING *",
     )
+    .bind(chat_id)
     .fetch_optional(db_conn)
     .await?;
 
-    Ok(record.and_then(|r| r.id))
+    Ok(row)
 }
 
 pub async fn get_or_create_chat_thread(

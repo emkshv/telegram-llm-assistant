@@ -17,7 +17,7 @@ pub async fn build_llm_thread_payload(
     chad_id: i64,
     chat_thread_id: i64,
 ) -> anyhow::Result<Vec<LLMThreadMessage>> {
-    let chat_bot = chat_bot::get_or_create_chat_bot(&db_conn, chad_id)
+    let chat_bot = chat_bot::get_or_create_chat_bot(db_conn, chad_id)
         .await
         .context("Failed to get or create chat bot")?;
 
@@ -26,7 +26,7 @@ pub async fn build_llm_thread_payload(
         role: "system".to_string(),
     };
 
-    let chat_thread_messages = chat_message::get_chat_thread_messages(&db_conn, chat_thread_id)
+    let chat_thread_messages = chat_message::get_chat_thread_messages(db_conn, chat_thread_id)
         .await
         .context("Failed to get the thread")?;
 

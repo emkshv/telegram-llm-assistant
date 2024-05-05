@@ -8,8 +8,9 @@ use std::fmt;
 
 use llm_thread_message::LLMThreadMessage;
 
-#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug)]
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, ValueEnum, Debug, Default)]
 pub enum LLMServiceKind {
+    #[default]
     OpenAI,
     Groq,
     Mock,
@@ -24,12 +25,6 @@ impl fmt::Display for LLMServiceKind {
         };
 
         write!(f, "{}", name)
-    }
-}
-
-impl Default for LLMServiceKind {
-    fn default() -> Self {
-        LLMServiceKind::OpenAI
     }
 }
 

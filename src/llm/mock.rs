@@ -8,16 +8,11 @@ pub struct Mock {
     pub completion_model: MockCompletionModel,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub enum MockCompletionModel {
+    #[default]
     Bright,
     Brighter,
-}
-
-impl Default for MockCompletionModel {
-    fn default() -> Self {
-        MockCompletionModel::Bright
-    }
 }
 
 pub fn all_completions() -> [MockCompletionModel; 2] {

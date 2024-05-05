@@ -12,21 +12,16 @@ use async_openai::{
     Client,
 };
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, Default)]
 pub enum OpenAICompletionModel {
     Gpt4,
     Gpt4_0613,
     Gpt4_32k,
     Gpt4_32k0613,
+    #[default]
     Gpt3_5turbo,
     Gpt3_5turbo0613,
     Gpt3_5turbo16k0613,
-}
-
-impl Default for OpenAICompletionModel {
-    fn default() -> Self {
-        OpenAICompletionModel::Gpt3_5turbo
-    }
 }
 
 pub fn all_completions() -> [OpenAICompletionModel; 7] {
@@ -121,7 +116,7 @@ async fn fetch_response(
         .chat()
         .create(request)
         .await
-        .map_err(|e| anyhow::Error::new(e))?;
+        .map_err(anyhow::Error::new)?;
 
     Ok(response)
 }
@@ -133,8 +128,8 @@ fn get_first_choice(resp: CreateChatCompletionResponse) -> anyhow::Result<String
         .ok_or_else(|| anyhow!("Message content not found"))
 }
 
-fn to_role(role: &String) -> Role {
-    match role.as_str() {
+fn to_role(role: &str) -> Role {
+    match role {
         "system" => Role::System,
         "user" => Role::User,
         _ => Role::User,

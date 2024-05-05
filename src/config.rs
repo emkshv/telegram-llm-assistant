@@ -11,15 +11,13 @@ pub struct Config {
 }
 
 fn assert_env_var(env_var_name: &str) -> String {
-    env::var(env_var_name)
-        .unwrap_or_else(|_| {
-            eprintln!(
-                "Error: {} environment variable is not set. Please, set {} and try again.",
-                env_var_name, env_var_name
-            );
-            std::process::exit(1);
-        })
-        .into()
+    env::var(env_var_name).unwrap_or_else(|_| {
+        eprintln!(
+            "Error: {} environment variable is not set. Please, set {} and try again.",
+            env_var_name, env_var_name
+        );
+        std::process::exit(1);
+    })
 }
 
 impl Default for Config {

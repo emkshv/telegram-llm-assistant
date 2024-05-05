@@ -28,18 +28,18 @@ pub async fn get_or_create_chat_bot(db_conn: &Pool<Sqlite>, id: i64) -> Result<C
     let openai_completion_model = OpenAICompletionModel::default_string();
     let groq_completion_model = GroqCompletionModel::default_string();
 
-    sqlx::query!(
+    sqlx::query(
         r#"INSERT INTO chat_bots
           (id, behavior, mock_model, openai_model, groq_model)
         VALUES(?1, ?2, ?3, ?4, ?5)
           ON CONFLICT (id)
           DO NOTHING"#,
-        id,
-        behavior,
-        mock_completion_model,
-        openai_completion_model,
-        groq_completion_model,
     )
+    .bind(id)
+    .bind(behavior)
+    .bind(mock_completion_model)
+    .bind(openai_completion_model)
+    .bind(groq_completion_model)
     .execute(db_conn)
     .await?;
 
@@ -53,13 +53,11 @@ pub async fn set_chat_bot_behavior(
     id: i64,
     behavior: &String,
 ) -> Result<ChatBot> {
-    sqlx::query!(
-        "UPDATE chat_bots SET behavior = ?1 WHERE id = ?2",
-        behavior,
-        id
-    )
-    .fetch_one(db_conn)
-    .await?;
+    sqlx::query("UPDATE chat_bots SET behavior = ?1 WHERE id = ?2")
+        .bind(behavior)
+        .bind(id)
+        .execute(db_conn)
+        .await?;
 
     let chat_bot = get_by_id(db_conn, id).await?;
 

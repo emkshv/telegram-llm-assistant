@@ -3,7 +3,7 @@ use sqlx::{migrate::MigrateDatabase, Pool, Sqlite};
 pub async fn create_db_if_doesnt_exists(url: &String) {
     let db_exists = Sqlite::database_exists(url).await.unwrap_or(false);
 
-    if db_exists == false {
+    if !db_exists {
         println!("DB {} not found. Create a new one.", url);
         let res = Sqlite::create_database(url).await;
 
