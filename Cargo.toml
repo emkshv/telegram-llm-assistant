@@ -9,7 +9,7 @@ edition = "2021"
 log = "0.4"
 pretty_env_logger = "0.5"
 tokio = { version = "1.8", features = ["rt-multi-thread", "macros"] }
-sqlx = { version = "0.7", features = [
+sqlx = { version = "0.8", features = [
   "sqlite",
   "runtime-tokio-native-tls",
   "chrono",
